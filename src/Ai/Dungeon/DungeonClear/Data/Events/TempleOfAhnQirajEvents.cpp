@@ -45,7 +45,7 @@ namespace
     constexpr uint32 kOuro = 15517;
 
     // temple_of_ahnqiraj.h boss-state slot.
-    constexpr uint32 kSlotOuro = 8;  // DATA_OURO
+    constexpr int32 kSlotOuro = 8;  // DATA_OURO
 
     // Ouro Spawner spawn (creature guid 88073), the centre of his mound.
     constexpr float kMoundX = -9173.09f, kMoundY = 2107.33f, kMoundZ = -65.0863f;

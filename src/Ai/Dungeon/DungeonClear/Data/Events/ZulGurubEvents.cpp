@@ -49,7 +49,7 @@ namespace
     constexpr uint32 kGongOfBethekk = 180526;
 
     // zulgurub.h boss-state slot.
-    constexpr uint32 kSlotArlokk = 3;  // DATA_ARLOKK
+    constexpr int32 kSlotArlokk = 3;  // DATA_ARLOKK
 
     // Gong of Bethekk spawn (gameobject guid 28667).
     constexpr float kGongX = -11569.2f, kGongY = -1627.87f, kGongZ = 41.2767f;
