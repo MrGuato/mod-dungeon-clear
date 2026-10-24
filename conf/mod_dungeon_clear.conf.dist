@@ -1568,6 +1568,36 @@ DungeonClear.SpectateSpeed = 2.5
 #    5-man budget ends winnable raid recoveries early.
 # DungeonClear.PostCombatRezTimeoutSecs.Raid = 180
 
+#    BLACKWING LAIR — the Suppression Rooms transit (map 469). The raid gathers
+#    at a staging point and walks an authored route through the two rooms (160
+#    whelps on a 30s respawn), holding for stragglers, nearby elites and armed
+#    Suppression Devices. Only consulted on that leg.
+#
+#    Master switch. 0 = cross the rooms with normal pathing, as before the
+#    transit existed (also the rollback if the route ever misbehaves).
+# DungeonClear.SuppressionTransit = 1
+#
+#    How far (yd) off the leader's route a member may drift before it is walked
+#    back in. Deliberately not widened for raids: every straggler holds the whole
+#    raid in combat on this leg, so the column's length is the failure.
+# DungeonClear.TransitPackLeash = 25
+#
+#    The gather gate at the staging point: radius (yd) the raid must ball up in,
+#    the share of members that must be inside it (0.5-1.0), and how long (ms) to
+#    wait for them before crossing anyway.
+# DungeonClear.TransitGatherRadius = 20
+# DungeonClear.TransitGatherQuorum = 0.85
+# DungeonClear.TransitGatherTimeoutMs = 60000
+#
+#    Stop and fight an elite within this many yards instead of walking past it
+#    (0 = never hold). 20 is just over the aggro band of the elites on this leg.
+# DungeonClear.TransitEliteHoldRadius = 20
+#
+#    Pause for an ARMED Suppression Device within this many yards so a bot can
+#    disarm it (0 = never pause; bots still disarm when they get the chance).
+#    15 is the playerbots disarm action's own reach.
+# DungeonClear.TransitDisarmHoldRadius = 15
+
 ###############################################################################
 # `.dc test` — AUTOMATED DUNGEON TEST RUNS
 #
