@@ -66,6 +66,8 @@ namespace
             RegisterGundrakRoster(t);
             RegisterVioletHoldRoster(t);
             RegisterMoltenCoreRoster(t);
+            RegisterZulGurubRoster(t);
+            RegisterTempleOfAhnQirajRoster(t);
             RegisterHallsOfStoneRoster(t);
             RegisterUtgardePinnacleRoster(t);
             RegisterPitOfSaronRoster(t);

@@ -508,6 +508,8 @@ namespace
             RegisterDrakTharonKeepEvents(t);
             RegisterGundrakEvents(t);
             RegisterMoltenCoreEvents(t);
+            RegisterZulGurubEvents(t);
+            RegisterTempleOfAhnQirajEvents(t);
             RegisterVioletHoldEvents(t);
             RegisterBlackwingLairEvents(t);
             RegisterHallsOfStoneEvents(t);
