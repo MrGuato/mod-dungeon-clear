@@ -43,6 +43,7 @@ namespace
             case EventStepKind::TeleportParty:
             case EventStepKind::DropInHole:
             case EventStepKind::Jump:
+            case EventStepKind::RawPath:
             case EventStepKind::EscortCreature:
             case EventStepKind::ClearRadius:
                 return true;
@@ -91,6 +92,7 @@ namespace
             {
                 case EventStepKind::MoveTo:
                 case EventStepKind::Jump:
+                case EventStepKind::RawPath:
                 case EventStepKind::UseGameObject:
                 case EventStepKind::Gossip:
                 case EventStepKind::EscortCreature:
@@ -114,6 +116,12 @@ namespace
     {
         struct Row { uint32 mapId; uint32 eventId; };
         static constexpr Row kRows[] = {
+            // Blackfathom Deeps water-breathing top-up: BfdBreathTopUpDue reads
+            // true only while the Serra'kis dive objective / Serra'kis is the next
+            // anchor or the tank stands in the Forgotten Pool's water, AND a bot
+            // lacks the aura; its one step (EnsureWaterBreathing) buffs from
+            // wherever the party is — that is the point, so "from afar" is right.
+            {48, 7},
             // Stratholme Timmy pre-clear: StrTimmyGated returns false until the
             // tank is within 60yd of Timmy's spawn (the #5 fix — a creature-
             // presence condition read true from map load and false-latched at the
@@ -2387,4 +2395,152 @@ TEST(DungeonEventIntegrityTest, SuppressionCrossingOwnsThePull)
     // And persistent, so the crossing keeps its progress across the combat gaps
     // the whelps guarantee.
     EXPECT_TRUE(ev->persistent);
+}
+
+// --- Party-wide chains and off-mesh polylines (Blackfathom Deeps) ---------------
+
+namespace
+{
+    float Dist(float ax, float ay, float az, float bx, float by, float bz)
+    {
+        return std::sqrt((ax - bx) * (ax - bx) + (ay - by) * (ay - by) + (az - bz) * (az - bz));
+    }
+
+    // The point a step ENDS at, for the spacing lint (a RawPath's last point,
+    // every other positioned step's x/y/z); false for a step with no position.
+    bool StepEnd(EventStep const& s, float& x, float& y, float& z)
+    {
+        if (s.kind == EventStepKind::RawPath)
+        {
+            if (s.path.empty())
+                return false;
+            x = s.path.back().x;
+            y = s.path.back().y;
+            z = s.path.back().z;
+            return true;
+        }
+        if (!IsMovementStepKind(s.kind))
+            return false;
+        x = s.x;
+        y = s.y;
+        z = s.z;
+        return true;
+    }
+}
+
+// A PartyWide event is run by EVERY bot from its own position, so it must be
+// the shape the chain driver assumes: Anchored + Persistent (the legs are
+// one-way), with at least one off-mesh step (otherwise plain boss-nav would
+// do), and with no leader-only interaction step BETWEEN movement steps — the
+// followers skip those, so a gossip or a GO click in the middle would be
+// skipped by four of five bots. Leader-only steps are allowed only BEFORE the
+// first movement step (the breath gate ahead of the Serra'kis dive).
+TEST(DungeonEventIntegrityTest, PartyWideEventsAreAnchoredPersistentMovementChains)
+{
+    for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())
+    {
+        if (!ev.partyWide)
+            continue;
+        EXPECT_EQ(ev.activation, EventActivation::Anchored) << ev.name;
+        EXPECT_TRUE(ev.persistent) << ev.name;
+        bool offMesh = false;
+        bool seenMovement = false;
+        for (EventStep const& s : ev.steps)
+        {
+            if (IsOffMeshStepKind(s.kind))
+                offMesh = true;
+            if (IsMovementStepKind(s.kind))
+                seenMovement = true;
+            else
+                EXPECT_FALSE(seenMovement)
+                    << "event " << ev.name << " has a leader-only step (kind "
+                    << static_cast<int>(s.kind) << ") after its movement chain began";
+            EXPECT_TRUE(s.partyWide) << ev.name << ": Build() must stamp partyWide onto every step";
+        }
+        EXPECT_TRUE(offMesh) << ev.name << ": a party-wide chain with no off-mesh step";
+        // A fall volume's retry and final points are the chain's own ends.
+        if (ev.fall.enabled)
+        {
+            float x = 0, y = 0, z = 0;
+            bool first = false;
+            for (EventStep const& s : ev.steps)
+                if (StepEnd(s, x, y, z))
+                {
+                    EXPECT_NEAR(Dist(x, y, z, ev.fall.retryX, ev.fall.retryY, ev.fall.retryZ), 0.0f, 0.01f)
+                        << ev.name << ": fall retry point is not the chain's first movement target";
+                    first = true;
+                    break;
+                }
+            EXPECT_TRUE(first);
+            for (auto it = ev.steps.rbegin(); it != ev.steps.rend(); ++it)
+                if (StepEnd(*it, x, y, z))
+                {
+                    EXPECT_NEAR(Dist(x, y, z, ev.fall.finalX, ev.fall.finalY, ev.fall.finalZ), 0.0f, 0.01f)
+                        << ev.name << ": fall final point is not the chain's last movement target";
+                    break;
+                }
+        }
+    }
+}
+
+// A raw spline does not collide. The only thing standing between an authored
+// point and a bot clipped into rock is the capture discipline, and these bounds
+// are its tripwire: a RawPath starts within 15yd of the step before it (the
+// MoveTo that settles the bot on its start — that first hop is a segment of the
+// same polyline, so it gets the same bound), consecutive points are at most 15yd
+// apart, and a Jump lands within 12yd of where the previous step ended (the
+// longest stone hop is 10.7yd; MoveJump is a spline to an exact point, but a
+// longer leap is a coordinate typo until proven otherwise). RawPath and
+// multi-Jump chains must also be Anchored + Persistent (one-way legs).
+TEST(DungeonEventIntegrityTest, OffMeshChainSpacingIsBounded)
+{
+    constexpr float kFirstPointMax = 15.0f;
+    constexpr float kPointSpacingMax = 15.0f;
+    constexpr float kJumpSpanMax = 12.0f;
+
+    for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())
+    {
+        uint32 jumps = 0;
+        bool rawPath = false;
+        float px = 0, py = 0, pz = 0;
+        bool havePrev = false;
+        for (EventStep const& s : ev.steps)
+        {
+            if (s.kind == EventStepKind::Jump)
+            {
+                ++jumps;
+                if (havePrev)
+                    EXPECT_LE(Dist(px, py, pz, s.x, s.y, s.z), kJumpSpanMax)
+                        << ev.name << ": a Jump lands " << Dist(px, py, pz, s.x, s.y, s.z)
+                        << "yd from the previous step";
+            }
+            if (s.kind == EventStepKind::RawPath)
+            {
+                rawPath = true;
+                ASSERT_FALSE(s.path.empty()) << ev.name << ": empty RawPath";
+                if (havePrev)
+                    EXPECT_LE(Dist(px, py, pz, s.path[0].x, s.path[0].y, s.path[0].z), kFirstPointMax)
+                        << ev.name << ": RawPath starts "
+                        << Dist(px, py, pz, s.path[0].x, s.path[0].y, s.path[0].z)
+                        << "yd from the previous step";
+                for (size_t i = 1; i < s.path.size(); ++i)
+                    EXPECT_LE((s.path[i] - s.path[i - 1]).length(), kPointSpacingMax)
+                        << ev.name << ": RawPath points " << i - 1 << " -> " << i << " are "
+                        << (s.path[i] - s.path[i - 1]).length() << "yd apart";
+            }
+            float x, y, z;
+            if (StepEnd(s, x, y, z))
+            {
+                px = x;
+                py = y;
+                pz = z;
+                havePrev = true;
+            }
+        }
+        if (rawPath || jumps > 1)
+        {
+            EXPECT_EQ(ev.activation, EventActivation::Anchored) << ev.name;
+            EXPECT_TRUE(ev.persistent) << ev.name;
+        }
+    }
 }

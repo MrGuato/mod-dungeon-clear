@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 #include "ObjectGuid.h"
@@ -543,6 +544,16 @@ struct DcRunState
     // it is copied into the harness once a second.
     uint32 eventProgressSeq = 0;
     std::vector<DcTestExtra> testExtras;
+
+    // PartyWide chain falls this run (DcPartyWideChain::HandleFall): every time
+    // a bot ended up in an event's fall volume. Published as the `chainFalls`
+    // test extra and in the DcDiag snapshot; zero across a batch is the proof
+    // the stone coordinates are right.
+    uint32 chainFalls = 0;
+
+    // Breath watchdog stamps (DcBreathProvision::WatchdogTick): member guid ->
+    // getMSTime() it was first seen under water; erased the tick it surfaces.
+    std::unordered_map<uint64, uint32> underwaterSinceMs;
 
     void BumpEventProgress() { ++eventProgressSeq; }
 
