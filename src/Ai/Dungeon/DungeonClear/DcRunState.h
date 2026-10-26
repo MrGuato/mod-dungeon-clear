@@ -564,6 +564,10 @@ struct DcRunState
     DcProgressWatchdog poolExitWatch;
     uint32 poolExits = 0;
 
+    // Stratholme's trap-alley pit rescues this run (StratholmeEvents.cpp,
+    // DcStratTrapAlley.h), published as the `stratPitRescues` test extra.
+    uint32 stratPitRescues = 0;
+
     void ClearPoolExit()
     {
         poolExitLeg.clear();

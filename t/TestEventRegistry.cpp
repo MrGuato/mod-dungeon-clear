@@ -359,6 +359,12 @@ namespace
             // only once the tank is out of the water. Repeatable: never latched,
             // a second fall re-fires it.
             {48, 8},
+            // Stratholme "Climb out of the trap-alley pit": a POSITION is the
+            // gate — StrTrapAlleyPitDue reads true only while the tank is in the
+            // pit under the Scarlet trap alley — and its lone step (hook 64,
+            // RescueFromTrapAlleyPit) teleports the party out and reports Done.
+            // Repeatable: never latched, a second fall re-fires it.
+            {329, 7},
         };
         for (Row const& r : kRows)
             if (r.mapId == mapId && r.eventId == eventId)
@@ -1444,6 +1450,9 @@ TEST(DungeonEventIntegrityTest, StepsOwnMovementIsConfinedToVettedEvents)
         // fallen tank along the pool floor and up the ramp with its own raw
         // spline; the per-tick hold would pin it in the water it has to leave.
         {48, 8},
+        // Stratholme "Climb out of the trap-alley pit": hook 64 teleports the
+        // party out of the pit; the per-tick hold has no anchor to hold it at.
+        {329, 7},
     };
 
     for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())
