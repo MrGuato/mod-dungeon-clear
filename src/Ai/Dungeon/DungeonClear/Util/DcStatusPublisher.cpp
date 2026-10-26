@@ -382,12 +382,13 @@ std::string DcStatusPublisher::BuildStatusPayload(PlayerbotAI* botAI)
 
             // The conditional-event rung tags its ticks "event" (orb run, transit,
             // gossips, levers). Name the event, or the panel falls through to
-            // "Idle" while the tank is plainly busy. The progress record is the
-            // guard against a stale token: it is zeroed once the event finishes.
+            // "Idle" while the tank is plainly busy. The progress record guards
+            // against a stale token, but its eventId outlives the event, so ask
+            // whether Drive ran it recently and it still has steps left.
             DungeonEventProgress const& eventProg =
                 context->GetValue<DungeonEventProgress&>(DcKey::ConditionalEventProgress)->Get();
             DungeonEvent const* runningEvent =
-                (phase == "event" && eventProg.eventId)
+                (phase == "event" && DungeonEventExecutor::IsProgressFresh(eventProg, bot->GetMapId()))
                     ? DungeonEventRegistry::Find(bot->GetMapId(), eventProg.eventId)
                     : nullptr;
 
