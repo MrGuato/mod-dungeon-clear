@@ -2088,13 +2088,29 @@ bool DungeonClearLeaderAssistAction::Execute(Event /*event*/)
     // Bounded by the same distance the follower rungs treat as "already here", so
     // a genuine round-the-corner assist — the case this fallback exists for — is
     // untouched.
-    if (!target && bestFighterDist <= DC_LEADER_ASSIST_COLOCATED_RANGE)
+    //
+    // With hysteresis: once the rung has yielded beside a member it keeps yielding
+    // until that member is DC_LEADER_ASSIST_COLOCATED_RELEASE away. The member
+    // follows the tank, so a bare threshold flips every tick across it and the two
+    // movers cancel (see the constant).
+    if (target)
+        _colocatedFighter.Clear();
+    else
     {
-        DC_PULL_TRACE("[DC:{}] leader assist: nothing reachable to assist and the "
-                      "nearest flagged member is {:.1f}yd away -> yielding the tick "
-                      "to the driving ladder",
-                      bot->GetName(), bestFighterDist);
-        return false;
+        bool const latched = _colocatedFighter == nearestFighter->GetGUID();
+        if (DungeonClearMath::LeaderAssistFallbackYields(bestFighterDist, latched,
+                                                         DC_LEADER_ASSIST_COLOCATED_RANGE,
+                                                         DC_LEADER_ASSIST_COLOCATED_RELEASE))
+        {
+            _colocatedFighter = nearestFighter->GetGUID();
+            DC_PULL_TRACE("[DC:{}] leader assist: nothing reachable to assist and the "
+                          "nearest flagged member is {:.1f}yd away{} -> yielding the tick "
+                          "to the driving ladder",
+                          bot->GetName(), bestFighterDist,
+                          latched ? " (still inside the release band)" : "");
+            return false;
+        }
+        _colocatedFighter.Clear();
     }
 
     Unit* const moveTo = target ? target : static_cast<Unit*>(nearestFighter);

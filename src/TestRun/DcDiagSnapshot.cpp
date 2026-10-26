@@ -163,7 +163,8 @@ namespace
             // 100% reach LEGIT` and the wedge looked like a healthy fight.
             bool const trigger =
                 DungeonClearMath::IsUnresolvableCombatHolder(asCreature != nullptr,
-                                                             asCreature && asCreature->IsTrigger());
+                                                             asCreature && asCreature->IsTrigger(),
+                                                             asCreature ? asCreature->GetEntry() : 0);
             bool const legitimate = reachable && canAttackMe && !trigger;
             if (DcDiag::IsLegitimatePvECombatHolder(pvp, legitimate))
                 anyLegitimatePvEHolder = true;
