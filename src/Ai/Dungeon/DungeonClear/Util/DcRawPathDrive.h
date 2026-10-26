@@ -70,11 +70,20 @@ namespace DcRawPathDrive
             d.cursor = last;
             return d;
         }
+        // Consume up to the FURTHEST point within reach, not only a run of them
+        // from the cursor: a tick can sample the bot after it has already
+        // passed a point without ever being within pointReached of it, and a
+        // cursor left on that point behind it would read as no progress and be
+        // re-issued backwards.
         std::uint32_t const before = cursor;
-        while (cursor < last && (pos - pts[cursor]).length() <= p.pointReached)
-            ++cursor;
         if (cursor > last)
             cursor = last;
+        for (std::uint32_t k = last; k-- > cursor;)
+            if ((pos - pts[k]).length() <= p.pointReached)
+            {
+                cursor = k + 1;
+                break;
+            }
         d.cursor = cursor;
         if (cursor != before)
             watch.Reset();  // a fresh point, a fresh budget

@@ -14,10 +14,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "G3D/Vector3.h"
 #include "ObjectGuid.h"
 #include "Timer.h"
 
 #include "Ai/Dungeon/DungeonClear/Util/DcChessConductor.h"
+#include "Ai/Dungeon/DungeonClear/Util/DcProgressWatchdog.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcRunProgress.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcRunWing.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcThrottle.h"
@@ -550,6 +552,25 @@ struct DcRunState
     // test extra and in the DcDiag snapshot; zero across a batch is the proof
     // the stone coordinates are right.
     uint32 chainFalls = 0;
+
+    // Blackfathom Deeps' Forgotten Pool exit (BlackfathomDeepsEvents.cpp): the
+    // swim leg from where the tank fell in to the ramp, its cursor, progress
+    // watchdog and wedge count. Built on the event's first tick, dropped when it
+    // ends. `poolExits` counts the climbs this run, published as the `poolExits`
+    // test extra.
+    std::vector<G3D::Vector3> poolExitLeg;
+    uint32 poolExitCursor = 0;
+    uint32 poolExitWedges = 0;
+    DcProgressWatchdog poolExitWatch;
+    uint32 poolExits = 0;
+
+    void ClearPoolExit()
+    {
+        poolExitLeg.clear();
+        poolExitCursor = 0;
+        poolExitWedges = 0;
+        poolExitWatch.Reset();
+    }
 
     // Breath watchdog stamps (DcBreathProvision::WatchdogTick): member guid ->
     // getMSTime() it was first seen under water; erased the tick it surfaces.

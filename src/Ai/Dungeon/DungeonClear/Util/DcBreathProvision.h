@@ -11,8 +11,8 @@
 
 class Player;
 
-// The IMPURE half of water breathing for an underwater leg (Blackfathom Deeps'
-// Old Serra'kis). Two entry points:
+// The IMPURE half of water breathing for an underwater leg (no event uses it
+// since Blackfathom Deeps' Old Serra'kis dive was dropped). Two entry points:
 //
 //   * Tick — the EnsureWaterBreathing event step, run by the LEADER: reads the
 //     party into DcBreathSource::Members, plans, and acts one cast per caster

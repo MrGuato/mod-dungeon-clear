@@ -17,7 +17,7 @@ class PlayerbotAI;
 class AiObjectContext;
 
 // A PARTY-WIDE event (DungeonEvent::partyWide) is a chain of movement steps
-// every bot runs itself — the Blackfathom stepping stones, the authored swims.
+// every bot runs itself — the Blackfathom jump puzzle, the authored swims.
 // Each bot keeps its own progress record here ("dungeon clear chain state"):
 // the leader's step pointer stays the event progress (DungeonEventProgress,
 // driven by DcObjectiveArriveAction), and this record carries the per-step
@@ -118,6 +118,23 @@ namespace DcPartyWideChain
     // The time-spacing fallback of the release rule.
     constexpr uint32 DC_CHAIN_SPACING_MS = 8000;
 
+    // PURE: is the event's fall volume ARMED on `stepIndex`? Only from the
+    // chain's first off-mesh hop (a Jump, or a land RawPath) onward. The steps
+    // before it are the approach, and an approach may legitimately run through
+    // the very water the volume covers — Blackfathom's jump puzzle starts with
+    // a swim across the first pool to the take-off, exactly as players do it.
+    // A forced fall (a wedge escalation) ignores this.
+    inline bool FallArmed(DungeonEvent const& ev, uint32 stepIndex)
+    {
+        for (size_t i = 0; i < ev.steps.size() && i <= stepIndex; ++i)
+        {
+            EventStep const& s = ev.steps[i];
+            if (s.kind == EventStepKind::Jump || (s.kind == EventStepKind::RawPath && !s.swim))
+                return true;
+        }
+        return false;
+    }
+
     enum class StepOutcome : uint8
     {
         Running,   // owned the tick, keep driving
@@ -157,9 +174,9 @@ namespace DcPartyWideChain
     bool IsOnSwimLeg(Player* bot);
 
     // IsOnSwimLeg, widened to the LEG: true while this bot's leader is inside an
-    // event that contains a submerged step or a water-breathing gate (the
-    // Serra'kis dive, with its breath provisioning and the fight on the floor),
-    // or the bot itself is on a swim step. The druid aquatic-form veto reads it.
+    // event that contains a submerged step or a water-breathing gate (a dive
+    // with breath provisioning and a fight at the bottom), or the bot itself
+    // is on a swim step. The druid aquatic-form veto reads it.
     bool IsWaterLegActive(Player* bot);
 
     // The chain record of `bot` (any bot with a DC context). nullptr for a human.

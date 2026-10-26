@@ -69,7 +69,8 @@ namespace
     {
         if (!ev.fall.enabled)
             return false;
-        if (!force && !ev.fall.Contains(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ()))
+        if (!force && (!DcPartyWideChain::FallArmed(ev, stepIndex) ||
+                       !ev.fall.Contains(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ())))
             return false;
 
         ++st.falls;

@@ -116,12 +116,6 @@ namespace
     {
         struct Row { uint32 mapId; uint32 eventId; };
         static constexpr Row kRows[] = {
-            // Blackfathom Deeps water-breathing top-up: BfdBreathTopUpDue reads
-            // true only while the Serra'kis dive objective / Serra'kis is the next
-            // anchor or the tank stands in the Forgotten Pool's water, AND a bot
-            // lacks the aura; its one step (EnsureWaterBreathing) buffs from
-            // wherever the party is — that is the point, so "from afar" is right.
-            {48, 7},
             // Stratholme Timmy pre-clear: StrTimmyGated returns false until the
             // tank is within 60yd of Timmy's spawn (the #5 fix — a creature-
             // presence condition read true from map load and false-latched at the
@@ -358,6 +352,13 @@ namespace
             // to island, which no arrival step can express — so Done is its yield.
             // Repeatable: it never completes; the predicate going false ends it.
             {578, 9},
+            // Blackfathom Deeps "Climb out of the Forgotten Pool": a POSITION is
+            // the gate — ForgottenPoolExitDue reads true only while the tank is
+            // over deep water inside the pool box — and its lone step (hook 63,
+            // DriveForgottenPoolExit) owns the swim to the ramp and reports Done
+            // only once the tank is out of the water. Repeatable: never latched,
+            // a second fall re-fires it.
+            {48, 8},
         };
         for (Row const& r : kRows)
             if (r.mapId == mapId && r.eventId == eventId)
@@ -1439,6 +1440,10 @@ TEST(DungeonEventIntegrityTest, StepsOwnMovementIsConfinedToVettedEvents)
         // tank while they happen.) And Done has to yield: every island clear,
         // Varos and Urom are ground fights for the objectives and the stock engine.
         {578, 9},
+        // Blackfathom Deeps "Climb out of the Forgotten Pool": hook 63 swims the
+        // fallen tank along the pool floor and up the ramp with its own raw
+        // spline; the per-tick hold would pin it in the water it has to leave.
+        {48, 8},
     };
 
     for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())
@@ -2434,7 +2439,7 @@ namespace
 // do), and with no leader-only interaction step BETWEEN movement steps — the
 // followers skip those, so a gossip or a GO click in the middle would be
 // skipped by four of five bots. Leader-only steps are allowed only BEFORE the
-// first movement step (the breath gate ahead of the Serra'kis dive).
+// first movement step (e.g. an EnsureWaterBreathing gate ahead of a dive).
 TEST(DungeonEventIntegrityTest, PartyWideEventsAreAnchoredPersistentMovementChains)
 {
     for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())
