@@ -365,6 +365,12 @@ namespace
             // RescueFromTrapAlleyPit) teleports the party out and reports Done.
             // Repeatable: never latched, a second fall re-fires it.
             {329, 7},
+            // Karazhan "Climb out from under the Guardian's Library": a POSITION
+            // is the gate — LibraryPitDue reads true only while the tank is in the
+            // castle-shell void under the library — and its lone step (hook 65,
+            // RescueFromLibraryPit) teleports the party out and reports Done.
+            // Repeatable: never latched, a second fall re-fires it.
+            {532, 4},
         };
         for (Row const& r : kRows)
             if (r.mapId == mapId && r.eventId == eventId)
@@ -1453,6 +1459,9 @@ TEST(DungeonEventIntegrityTest, StepsOwnMovementIsConfinedToVettedEvents)
         // Stratholme "Climb out of the trap-alley pit": hook 64 teleports the
         // party out of the pit; the per-tick hold has no anchor to hold it at.
         {329, 7},
+        // Karazhan "Climb out from under the Guardian's Library": hook 65 teleports
+        // the party back up; the per-tick hold has no anchor to hold it at.
+        {532, 4},
     };
 
     for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())

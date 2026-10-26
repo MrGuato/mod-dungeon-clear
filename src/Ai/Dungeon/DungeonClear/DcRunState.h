@@ -568,6 +568,10 @@ struct DcRunState
     // DcStratTrapAlley.h), published as the `stratPitRescues` test extra.
     uint32 stratPitRescues = 0;
 
+    // Karazhan's library-pit rescues this run (KarazhanEvents.cpp,
+    // DcKaraLibraryPit.h), published as the `karaPitRescues` test extra.
+    uint32 karaPitRescues = 0;
+
     void ClearPoolExit()
     {
         poolExitLeg.clear();

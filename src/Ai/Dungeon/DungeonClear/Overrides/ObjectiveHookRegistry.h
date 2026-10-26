@@ -116,6 +116,11 @@ void RegisterBlackrockSpireHooks(ObjectiveHookRegistry::HookTable& out);
 // the events in BlackfathomDeepsEvents.cpp, which owns the pool geometry.
 void RegisterBlackfathomDeepsHooks(ObjectiveHookRegistry::HookTable& out);
 
+// Karazhan (map 532) — the Guardian's Library pit rescue (id 65). Lives beside
+// the events in KarazhanEvents.cpp; geometry in Util/DcKaraLibraryPit.h. Chess
+// (ids 42-43) registers through RegisterKarazhanChessHooks.
+void RegisterKarazhanHooks(ObjectiveHookRegistry::HookTable& out);
+
 // Stratholme (map 329) — ziggurat crystal repair (ids 44-46). Lives beside the
 // ziggurat events in StratholmeEvents.cpp, which owns the chamber geometry.
 void RegisterStratholmeHooks(ObjectiveHookRegistry::HookTable& out);
