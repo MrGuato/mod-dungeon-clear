@@ -121,6 +121,12 @@ EventBuilder& EventBuilder::PanelBeforeBoss(uint32 bossEntry)
     return *this;
 }
 
+EventBuilder& EventBuilder::SummonHoldRadius(float yards)
+{
+    _ev.summonHoldRadius = yards;
+    return *this;
+}
+
 EventBuilder& EventBuilder::PanelAfterBoss(uint32 bossEntry)
 {
     _ev.panelSortAfterBossEntry = bossEntry;

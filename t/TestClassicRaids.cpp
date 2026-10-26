@@ -65,6 +65,9 @@ TEST(DcClassicRaidsTest, ZulGurubGongEventGatesArlokk)
     // Repeatable keeps it pending (no not-spawned stall) until she dies.
     EXPECT_TRUE(ev->repeatable);
     EXPECT_EQ(ev->panelGatesBossEntry, 14515u);
+    // The pull hold covers the gong platform only, not the ~58 elites within the
+    // default 80yd.
+    EXPECT_FLOAT_EQ(ev->summonHoldRadius, 20.0f);
     ASSERT_EQ(ev->steps.size(), 1u);
     EXPECT_EQ(ev->steps[0].kind, EventStepKind::UseGameObject);
     EXPECT_EQ(ev->steps[0].goEntry, 180526u);
@@ -96,6 +99,7 @@ TEST(DcClassicRaidsTest, AhnQirajMoundEventGarrisonsUntilOuroIsUp)
     EXPECT_EQ(ev->activation, EventActivation::Conditional);
     EXPECT_TRUE(ev->repeatable);
     EXPECT_EQ(ev->panelGatesBossEntry, 15517u);
+    EXPECT_FLOAT_EQ(ev->summonHoldRadius, 0.0f);  // default 80yd: no trash near the mound
     ASSERT_EQ(ev->steps.size(), 1u);
     EXPECT_EQ(ev->steps[0].kind, EventStepKind::MoveTo);
     EXPECT_EQ(ev->steps[0].creatureEntry, 15517u);  // the spawn gate

@@ -58,6 +58,13 @@ namespace
     constexpr float kGongRingRange = 30.0f;
     constexpr float kGongSearch = 35.0f;
 
+    // Pull stand-down radius around the gong and around Arlokk once she is up.
+    // The default 80yd holds the pull off ~58 elites (the Zulian Panther pens,
+    // Hakkari Shadow Hunters, the Blood Drinkers and Berserker on the way in), so
+    // the tank would walk into them instead of pulling them. 20yd covers the gong
+    // platform and her home point (PosMoveOnSpawn, 7yd from the gong).
+    constexpr float kGongHoldRadius = 20.0f;
+
     constexpr uint32 kEventRingGong = 1;
 
     bool ArlokkGongDue(Player* bot, AiObjectContext* /*context*/)
@@ -80,11 +87,18 @@ void RegisterZulGurubEvents(std::vector<DungeonEvent>& out)
     // keeps the not-spawned stall off Arlokk's anchor) until she is dead, and so a
     // wipe can ring it again once the gong resets. PanelBeforeBoss folds the row
     // into Arlokk's and holds the dynamic pull off while the tank parks on the
-    // gong; the temple floor around it is clear once the path in is.
+    // gong, but only within kGongHoldRadius so the trash around it is pulled
+    // first.
+    //
+    // She spawns 62yd east (PosSummonArlokk) and runs to her home beside the gong.
+    // Reaching it unengaged despawns her and re-enables the gong
+    // (boss_arlokk JustReachedHome), so the tank waiting on the gong is what makes
+    // her aggro on the way in.
     out.push_back(EventBuilder(kMapId, kEventRingGong, "Ring the Gong of Bethekk")
                       .Conditional(&ArlokkGongDue)
                       .Repeatable()
                       .PanelBeforeBoss(kArlokk)
+                      .SummonHoldRadius(kGongHoldRadius)
                       .UseGO(kGongOfBethekk, kGongSearch)
                       .Build());
 }
