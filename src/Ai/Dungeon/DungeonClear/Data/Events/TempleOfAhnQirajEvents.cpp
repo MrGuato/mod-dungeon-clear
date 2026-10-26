@@ -60,8 +60,11 @@ namespace
     {
         if (DcTargeting::FindLiveCreatureOnMap(bot, kOuro))
             return false;
+        // IN_PROGRESS covers his submerges: Ouro despawns and a dirt mound summons
+        // a new one ~30s later, so for that window there is no live Ouro and the
+        // garrison would drag the tank back to the mound mid-fight.
         InstanceScript* inst = DcTargeting::GetInstanceScript(bot);
-        if (inst && inst->GetBossState(kSlotOuro) == DONE)
+        if (inst && (inst->GetBossState(kSlotOuro) == DONE || inst->GetBossState(kSlotOuro) == IN_PROGRESS))
             return false;
         return bot->GetDistance(kMoundX, kMoundY, kMoundZ) <= kArmRange;
     }
