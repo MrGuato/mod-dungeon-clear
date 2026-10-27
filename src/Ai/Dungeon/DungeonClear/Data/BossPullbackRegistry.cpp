@@ -91,7 +91,9 @@ namespace
             // tick and nothing ever starts the fight (tr-20261026-221350-1 sat
             // there 15 minutes). Forcing her into combat runs her own intro: bat
             // form, one waypoint down to the floor, then she fights. The camp is
-            // a floor point the tank stood on in that run, 14yd from her.
+            // a floor point the tank stood on in that run, 14yd from her. Her
+            // script turns combat movement off, so the force skips AttackStart
+            // (see DcForceBossAggroOnTank): it would cancel that flight.
             { 309, 14517, -12286.9f, -1384.0f, 132.9f, 40.0f, false },
         };
         return rows;

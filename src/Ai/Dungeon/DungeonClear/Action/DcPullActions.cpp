@@ -253,7 +253,14 @@ namespace
             boss->EngageWithTarget(bot);
             // ...and this makes his AI actually pick the tank up and come, rather
             // than merely holding threat while standing still.
-            if (boss->AI())
+            //
+            // Not when his script has switched combat movement off. AttackStart
+            // then only plants him (ScriptedAI::AttackStartNoMove -> MoveIdle),
+            // which cancels whatever path JustEngagedWith just started. Jeklik is
+            // that boss: her engage flies her down from the cave, and MoveIdle
+            // left her passive up there, never reaching the path end that turns
+            // her aggressive (tr-20261027-001452-1, ten minutes at her ledge).
+            if (boss->AI() && boss->IsCombatMovementAllowed())
                 boss->AI()->AttackStart(bot);
         }
 
